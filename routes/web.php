@@ -4,6 +4,7 @@ use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\UserController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -35,3 +36,5 @@ route::middleware(['auth', 'verified'])->group(function () {
 });
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
+
+Route::resource("users", UserController::class);
