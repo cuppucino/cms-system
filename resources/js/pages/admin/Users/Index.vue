@@ -55,10 +55,10 @@ const handleDelete = (id: number) => {
     <Head title="Users" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-         <div>
-                <Link :href="route('users.create')">
-                <Button class="cursor-pointer">Create a User</Button></Link>
-            </div>
+        <div>
+            <Link :href="route('users.create')">
+            <Button class="cursor-pointer">Create a User</Button></Link>
+        </div>
 
         <div class="p-4">
             <div v-if="page.props.flash?.message" class="mb-4">
@@ -101,8 +101,17 @@ const handleDelete = (id: number) => {
                             <TableCell>{{ user.email }}</TableCell>
                             <TableCell>{{ user.role }}</TableCell>
                             <TableCell class="text-center space-x-2">
-                                <Link :href="route('users.edit', { id: user.id })"><Button
-                                    class="bg-slate-600">Edit</Button></Link>
+                                <!-- Edit Button -->
+                                <Link :href="route('users.edit', { id: user.id })">
+                                <Button class="bg-slate-600">Edit</Button>
+                                </Link>
+
+                                <!-- Show Button -->
+                                <Link :href="route('users.show', { id: user.id })">
+                                <Button class="bg-green-600">Show</Button>
+                                </Link>
+
+                                <!-- Delete Button -->
                                 <Button class="bg-red-600" @click="handleDelete(user.id)">Delete</Button>
                             </TableCell>
                         </TableRow>

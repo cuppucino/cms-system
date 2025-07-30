@@ -1,32 +1,60 @@
 <script setup lang="ts">
+import { ref } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, GraduationCap, Users } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, GraduationCap, Users, Notebook } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
-const mainNavItems: NavItem[] = [
+// Define the User interface
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  is_admin: boolean;
+  // Add other user properties as needed
+}
+
+// Get the user object from Inertia props with proper typing
+const { props } = usePage();
+const user = props.auth.user as User | undefined; // Type assertion with fallback to undefined
+
+// Check if the logged-in user is an admin
+const isAdmin = ref(user?.is_admin ?? false); // Use optional chaining and default to false
+
+// Admin and student-specific navigation items
+const adminNavItems = [
     {
         title: 'Dashboard',
-        href: '/dashboard',
+        href: route('admin.dashboard'),
         icon: LayoutGrid,
     },
     {
-        title: 'Products',
-        href: '/products',
-        icon: GraduationCap,
+        title: 'Users',
+       href: route('admin.users.index'),
+        icon: Users,
     },
     {
-        title: 'Users',
-        href: '/users',
-        icon: Users,
+        title: 'Roles',
+       href: route('admin.roles.index'),
+        icon: Notebook,
     },
 ];
 
-const footerNavItems: NavItem[] = [
+const studentNavItems = [
+    {
+        title: 'Dashboard',
+        href: route('student.dashboard'),
+        icon: LayoutGrid,
+    },
+
+];
+
+// Footer Nav Items
+const footerNavItems = [
     {
         title: 'Github Repo',
         href: 'https://github.com/laravel/vue-starter-kit',
@@ -55,7 +83,7 @@ const footerNavItems: NavItem[] = [
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="mainNavItems" />
+            <NavMain :items="isAdmin ? adminNavItems : studentNavItems" />
         </SidebarContent>
 
         <SidebarFooter>

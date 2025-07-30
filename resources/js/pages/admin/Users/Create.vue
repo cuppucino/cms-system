@@ -2,7 +2,7 @@
 import Button from '@/components/ui/button/Button.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, router, useForm} from '@inertiajs/vue3';
+import { Head, Link, useForm} from '@inertiajs/vue3';
 
 
 
@@ -19,16 +19,17 @@ const form = useForm({
     email: '',
     password: '',
     role: 'User',
+    is_admin: '0', // Add is_admin property, default to '0' (User)
 });
 
 // Submit handler
-const submit = () => {
-    form.post(route('users.store'), {
-        onSuccess: () => {
-            form.reset(); // Clear form after success
-        },
-    });
-};
+// const submit = () => {
+//     form.post(route('users.store'), {
+//         onSuccess: () => {
+//             form.reset(); // Clear form after success
+//         },
+//     });
+// };
 </script>
 
 
@@ -39,7 +40,7 @@ const submit = () => {
         <div class="p-4 max-w-md mx-auto">
             <h1 class="text-xl font-bold mb-4">Create User</h1>
 
-            <form @submit.prevent="submit" class="space-y-4">
+            <form @submit.prevent="form.post(route('users.store'))" class="space-y-4">
 
                 <!-- Name -->
                 <div>
@@ -87,12 +88,12 @@ const submit = () => {
                 <div>
                     <label for="role" class="block text-sm font-medium">Role</label>
                     <select
-                        v-model="form.role"
-                        id="role"
+                        v-model="form.is_admin"
+                        id="is_admin"
                         class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
                     >
-                        <option value="User">User</option>
-                        <option value="Admin">Admin</option>
+                        <option value="0">User</option>
+                        <option value="1">Admin</option>
                         <!-- Add other roles if needed -->
                     </select>
                     <div v-if="form.errors.role" class="text-red-600 text-sm mt-1">
