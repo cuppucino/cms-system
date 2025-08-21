@@ -104,7 +104,7 @@ const form = useForm({
                 <!-- Buttons -->
                 <div class="flex items-center space-x-2">
                     <Button type="submit" class="bg-blue-600 text-white">Create</Button>
-                    <Link :href="route('users.index')">
+                    <Link :href="route('admin.users.index')">
                         <Button class="bg-gray-600 text-white">Back</Button>
                     </Link>
                 </div>

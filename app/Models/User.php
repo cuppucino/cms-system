@@ -21,7 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-         'role',
+        'role',
         'is_admin',
     ];
 
@@ -47,5 +47,10 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_admin' => 'boolean',
         ];
+    }
+
+    public function gownCollection()
+    {
+        return $this->hasOne(GownCollection::class);
     }
 }

@@ -90,10 +90,10 @@ const handleDelete = (id: number) => {
                             <TableCell class="font-medium">{{ user.name }}</TableCell>
                             <TableCell>{{ user.email }}</TableCell>
                             <TableCell class="text-center space-x-2">
-                                <Link :href="route('users.edit', { id: user.id })">
+                                <Link :href="route('admin.users.edit', { id: user.id })">
                                     <Button class="bg-slate-600">Edit</Button>
                                 </Link>
-                                <Link :href="route('users.show', { id: user.id })">
+                                <Link :href="route('admin.users.show', { id: user.id })">
                                     <Button class="bg-green-600">Show</Button>
                                 </Link>
                                 <Button class="bg-red-600" @click="handleDelete(user.id)">Delete</Button>
@@ -105,10 +105,10 @@ const handleDelete = (id: number) => {
                             <TableCell class="font-medium">{{ user.name }}</TableCell>
                             <TableCell>{{ user.email }}</TableCell>
                             <TableCell class="text-center space-x-2">
-                                <Link :href="route('users.edit', { id: user.id })">
+                                <Link :href="route('admin.users.edit', { id: user.id })">
                                     <Button class="bg-slate-600">Edit</Button>
                                 </Link>
-                                <Link :href="route('users.show', { id: user.id })">
+                                <Link :href="route('admin.users.show', { id: user.id })">
                                     <Button class="bg-green-600">Show</Button>
                                 </Link>
                                 <Button class="bg-red-600" @click="handleDelete(user.id)">Delete</Button>

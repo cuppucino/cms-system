@@ -6,7 +6,7 @@ import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, GraduationCap, Users, Notebook } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, GraduationCap, Users, Notebook, CheckSquare } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 // Define the User interface
@@ -42,6 +42,17 @@ const adminNavItems = [
        href: route('admin.roles.index'),
         icon: Notebook,
     },
+    {
+        title: 'Gown',
+       href: route('admin.gowns.index'),
+        icon: GraduationCap,
+    },
+    {
+  title: 'Gown Collections',
+  href: route('admin.gown-collections.index'),
+  icon: CheckSquare,
+},
+
 ];
 
 const studentNavItems = [
