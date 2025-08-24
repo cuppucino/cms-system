@@ -6,16 +6,16 @@ import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, GraduationCap, Users, Notebook, CheckSquare } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, GraduationCap, Users, Notebook, CheckSquare, Calendar, Bell } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 // Define the User interface
 interface User {
-  id: number;
-  name: string;
-  email: string;
-  is_admin: boolean;
-  // Add other user properties as needed
+    id: number;
+    name: string;
+    email: string;
+    is_admin: boolean;
+    // Add other user properties as needed
 }
 
 // Get the user object from Inertia props with proper typing
@@ -34,24 +34,46 @@ const adminNavItems = [
     },
     {
         title: 'Users',
-       href: route('admin.users.index'),
+        href: route('admin.users.index'),
         icon: Users,
     },
     {
         title: 'Roles',
-       href: route('admin.roles.index'),
+        href: route('admin.roles.index'),
         icon: Notebook,
     },
     {
         title: 'Gown',
-       href: route('admin.gowns.index'),
+        href: route('admin.gowns.index'),
         icon: GraduationCap,
     },
     {
-  title: 'Gown Collections',
-  href: route('admin.gown-collections.index'),
-  icon: CheckSquare,
-},
+        title: 'Sessions',
+        href: route('admin.sessions.index'),
+        icon: Calendar,
+    },
+    {
+        title: 'Gown Collections',
+        href: route('admin.gown-collections.index'),
+        icon: CheckSquare,
+    },
+    {
+        title: 'Attendance',
+        href: route('admin.attendance.index'),
+        icon: CheckSquare,
+    },
+
+    {
+        title: 'Reports',
+        href: route('admin.reports.index'),
+        icon: BookOpen,
+    },
+
+    {
+        title: 'Notifications',
+        href: route('admin.notifications.index'),
+        icon: Bell, // import Bell from lucide-vue-next
+    },
 
 ];
 
@@ -86,7 +108,7 @@ const footerNavItems = [
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
                         <Link :href="route('dashboard')">
-                            <AppLogo />
+                        <AppLogo />
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>

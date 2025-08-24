@@ -21,4 +21,13 @@ class ConvocationSession extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    public function users()
+{
+    return $this->hasMany(User::class);
+}
+public function registrations()
+{
+    return $this->hasMany(SessionRegistration::class);
+}
 }

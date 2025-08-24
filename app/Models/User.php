@@ -53,4 +53,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(GownCollection::class);
     }
+
+    public function registrations()
+    {
+        return $this->hasMany(SessionRegistration::class);
+    }
 }

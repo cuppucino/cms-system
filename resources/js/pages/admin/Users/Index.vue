@@ -111,6 +111,11 @@ const handleDelete = (id: number) => {
                                 <Button class="bg-green-600">Show</Button>
                                 </Link>
 
+                                <!-- Invitation Letter Button -->
+                                <Link :href="route('admin.invitation.show', { id: user.id })" method="get" as="button">
+                                <Button class="bg-purple-600">Invitation</Button>
+                                </Link>
+
                                 <!-- Delete Button -->
                                 <Button class="bg-red-600" @click="handleDelete(user.id)">Delete</Button>
                             </TableCell>
