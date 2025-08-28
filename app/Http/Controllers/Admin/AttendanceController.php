@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AttendanceRecord;
 use Illuminate\Http\Request;
+use App\Exports\AttendanceExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Inertia\Inertia;
 
 class AttendanceController extends Controller
@@ -25,7 +27,7 @@ class AttendanceController extends Controller
         if ($request->filled('search')) {
             $query->whereHas('user', function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%")
-                  ->orWhere('email', 'like', "%{$request->search}%");
+                    ->orWhere('email', 'like', "%{$request->search}%");
             });
         }
 
@@ -70,5 +72,10 @@ class AttendanceController extends Controller
         $record->save();
 
         return back()->with('message', 'Student checked in manually.');
+    }
+
+    public function export()
+    {
+        return Excel::download(new AttendanceExport, 'attendance_report.xlsx');
     }
 }

@@ -23,11 +23,11 @@ class ConvocationSession extends Model
     }
 
     public function users()
-{
-    return $this->hasMany(User::class);
-}
-public function registrations()
-{
-    return $this->hasMany(SessionRegistration::class);
-}
+    {
+        return $this->hasMany(User::class);
+    }
+    public function registrations()
+    {
+        return $this->hasMany(SessionRegistration::class);
+    }
 }

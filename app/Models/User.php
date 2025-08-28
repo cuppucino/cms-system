@@ -23,6 +23,11 @@ class User extends Authenticatable
         'password',
         'role',
         'is_admin',
+        'student_id',
+        'course_id',
+        'gown_size',
+        'convocation_session_id',
+        'status',
     ];
 
     /**
@@ -57,5 +62,14 @@ class User extends Authenticatable
     public function registrations()
     {
         return $this->hasMany(SessionRegistration::class);
+    }
+
+    public function course()
+    {
+        return $this->belongsTo(\App\Models\Course::class);
+    }
+    public function convocationSession()
+    {
+        return $this->belongsTo(\App\Models\ConvocationSession::class);
     }
 }

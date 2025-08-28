@@ -6,7 +6,7 @@ import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, GraduationCap, Users, Notebook, CheckSquare, Calendar, Bell } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, GraduationCap, Users, Notebook, CheckSquare, Calendar, Bell, DollarSign } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 // Define the User interface
@@ -73,6 +73,11 @@ const adminNavItems = [
         title: 'Notifications',
         href: route('admin.notifications.index'),
         icon: Bell, // import Bell from lucide-vue-next
+    },
+    {
+        title: 'Payments', // ✅ New payments menu
+        href: route('admin.payment.index'),
+        icon: DollarSign, // you can swap for a better icon e.g. DollarSign
     },
 
 ];
