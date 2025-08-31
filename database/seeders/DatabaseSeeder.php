@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
         AdminUserSeeder::class,
         ConvocationSessionSeeder::class,
         SessionRegistrationSeeder::class,
+        GownStockSeeder::class,
     ]);
 }
 

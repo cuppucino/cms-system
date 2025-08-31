@@ -30,7 +30,12 @@ class GownController extends Controller
             'total' => 'required|integer|min:1',
         ]);
 
-        GownStock::create($request->only('size', 'total'));
+        GownStock::create([
+            'size' => $request->size,
+            'total' => $request->total,
+            'issued' => 0,
+            'available' => $request->total, // fix here
+        ]);
         return redirect()->route('admin.gowns.index')->with('message', 'Gown stock added!');
     }
 

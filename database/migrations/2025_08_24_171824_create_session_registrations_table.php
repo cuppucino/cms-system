@@ -10,18 +10,17 @@ return new class extends Migration
     {
         Schema::create('session_registrations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')
-                ->constrained()
-                ->onDelete('cascade'); // student
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('convocation_session_id')->constrained('convocation_sessions')->onDelete('cascade');
+            $table->unsignedInteger('guest_count')->default(0);
 
-            $table->foreignId('convocation_session_id')
-                ->constrained('convocation_sessions')
-                ->onDelete('cascade'); // make sure it points to the correct table
+            // New fields
+            $table->boolean('attendance_confirmed')->default(false);
+            $table->string('gown_size')->nullable(); // XS, S, M, L, XL
+            $table->date('collection_date')->nullable();
 
-            $table->unsignedInteger('guest_count')->default(0); // always positive
             $table->timestamps();
-
-            $table->unique(['user_id', 'convocation_session_id']); // prevent double booking
+            $table->unique(['user_id', 'convocation_session_id']);
         });
     }
 

@@ -17,6 +17,7 @@ return new class extends Migration
             $table->date('date');
             $table->string('location');
             $table->integer('quota');
+            $table->integer('registered')->default(0); // Track the number of registered students
             $table->timestamps();
         });
     }

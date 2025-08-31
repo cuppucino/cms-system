@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue'
-import Button from '@/components/ui/button/Button.vue'
-import { Head, router, usePage } from '@inertiajs/vue3'
+import StudentLayout from '@/layouts/StudentLayout.vue'
+import { Head, router } from '@inertiajs/vue3'
 
-const props = defineProps<{ gown: { id: number; name: string; fee: number } }>()
+defineOptions({ layout: StudentLayout })
+
+const props = defineProps<{
+  gown: { id: number; size?: string | null }
+  amount: string
+}>()
 
 const handlePay = () => {
   router.post(route('student.payments.store'), {
     gown_id: props.gown.id,
-    amount: props.gown.fee,
+    amount: props.amount,
   })
 }
 </script>
@@ -16,16 +20,28 @@ const handlePay = () => {
 <template>
   <Head title="Make Payment" />
 
-  <AppLayout :breadcrumbs="[{ title: 'Payment', href: '#' }]">
-    <div class="max-w-lg mx-auto bg-white shadow rounded-lg p-6">
-      <h2 class="text-xl font-semibold mb-4">Payment for {{ props.gown.name }}</h2>
+  <div class="max-w-lg mx-auto bg-white shadow rounded-xl border p-6">
+    <h2 class="text-lg font-semibold">Deposit Payment</h2>
+    <p class="mt-1 text-sm text-gray-600">This is a dummy payment (no real charge).</p>
 
-      <p class="mb-2">Fee: <span class="font-bold">RM {{ props.gown.fee }}</span></p>
-      <p class="mb-4 text-gray-600">This is a dummy payment simulation.</p>
-
-      <Button class="bg-blue-600 text-white px-4 py-2" @click="handlePay">
-        Pay Now
-      </Button>
+    <div class="mt-4 space-y-2 text-sm">
+      <div class="flex justify-between">
+        <span>Gown Size</span>
+        <span class="font-medium">{{ props.gown.size ?? '—' }}</span>
+      </div>
+      <div class="flex justify-between">
+        <span>Amount</span>
+        <span class="text-indigo-600 font-semibold">RM {{ props.amount }}</span>
+      </div>
     </div>
-  </AppLayout>
+
+    <div class="mt-6">
+      <button
+        class="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500"
+        @click="handlePay"
+      >
+        Pay Now
+      </button>
+    </div>
+  </div>
 </template>

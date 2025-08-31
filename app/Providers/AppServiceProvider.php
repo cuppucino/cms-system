@@ -7,6 +7,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use App\Models\Notification;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -38,5 +39,34 @@ class AppServiceProvider extends ServiceProvider
                 ->count();
         });
 
+        Inertia::share([
+            'auth' => [
+                'user' => function () {
+                    if (!Auth::check()) {
+                        return null;
+                    }
+
+                    return [
+                        'id' => Auth::id(),
+                        'name' => Auth::user()->name,
+                        'unread_notifications' => Notification::where('user_id', Auth::id())
+                            ->where('is_read', false)
+                            ->count(),
+                        'recent_notifications' => Notification::where('user_id', Auth::id())
+                            ->latest()
+                            ->take(5)
+                            ->get()
+                            ->map(fn($n) => [
+                                'id' => $n->id,
+                                'title' => $n->title,
+                                'message' => $n->message,
+                                'is_read' => $n->is_read,
+                                'created_at' => $n->created_at->diffForHumans(),
+                            ]),
+
+                    ];
+                },
+            ],
+        ]);
     }
 }

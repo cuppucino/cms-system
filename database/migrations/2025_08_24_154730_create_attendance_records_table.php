@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('session_id')->constrained('convocation_sessions')->onDelete('cascade');
-            $table->enum('status', ['pending', 'checked_in'])->default('pending');
+            $table->uuid('attendance_token')->unique();
+            $table->enum('status', ['pending', 'registered', 'checked_in'])->default('pending');
             $table->dateTime('checked_in_at')->nullable();
             $table->timestamps();
         });

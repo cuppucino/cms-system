@@ -1,109 +1,87 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { usePage } from '@inertiajs/vue3';
-import NavFooter from '@/components/NavFooter.vue';
-import NavMain from '@/components/NavMain.vue';
-import NavUser from '@/components/NavUser.vue';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, GraduationCap, Users, Notebook, CheckSquare, Calendar, Bell, DollarSign } from 'lucide-vue-next';
-import AppLogo from './AppLogo.vue';
+import { ref } from 'vue'
+import { usePage, Link } from '@inertiajs/vue3'
 
-// Define the User interface
+import NavFooter from '@/components/NavFooter.vue'
+import NavMain from '@/components/NavMain.vue'
+import NavUser from '@/components/NavUser.vue'
+import AppLogo from './AppLogo.vue'
+
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+} from '@/components/ui/sidebar'
+
+// Lucide icons (unique; all exist in lucide-vue-next)
+import {
+    LayoutGrid,     // Dashboard
+    Calendar,       // Sessions
+    Ticket,         // Invitations
+    Users,          // Users
+    BookOpen,       // Courses
+    GraduationCap,  // Gown
+    Archive,        // Gown Collections
+    ClipboardCheck, // Attendance
+    DollarSign,     // Payments
+    Bell,           // Notifications
+    BarChart2,      // Reports
+    Folder,         // Footer links
+} from 'lucide-vue-next'
+
+// --- types ---
 interface User {
-    id: number;
-    name: string;
-    email: string;
-    is_admin: boolean;
-    // Add other user properties as needed
+    id: number
+    name: string
+    email: string
+    is_admin: boolean
 }
 
-// Get the user object from Inertia props with proper typing
-const { props } = usePage();
-const user = props.auth.user as User | undefined; // Type assertion with fallback to undefined
+// --- auth ---
+const { props } = usePage()
+const user = props.auth?.user as User | undefined
+const isAdmin = ref(Boolean(user?.is_admin))
 
-// Check if the logged-in user is an admin
-const isAdmin = ref(user?.is_admin ?? false); // Use optional chaining and default to false
-
-// Admin and student-specific navigation items
+// --- nav items (grouped + ordered) ---
 const adminNavItems = [
-    {
-        title: 'Dashboard',
-        href: route('admin.dashboard'),
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Users',
-        href: route('admin.users.index'),
-        icon: Users,
-    },
-    {
-        title: 'Roles',
-        href: route('admin.roles.index'),
-        icon: Notebook,
-    },
-    {
-        title: 'Gown',
-        href: route('admin.gowns.index'),
-        icon: GraduationCap,
-    },
-    {
-        title: 'Sessions',
-        href: route('admin.sessions.index'),
-        icon: Calendar,
-    },
-    {
-        title: 'Gown Collections',
-        href: route('admin.gown-collections.index'),
-        icon: CheckSquare,
-    },
-    {
-        title: 'Attendance',
-        href: route('admin.attendance.index'),
-        icon: CheckSquare,
-    },
+    // Overview
+    { title: 'Dashboard', href: route('admin.dashboard'), icon: LayoutGrid },
 
-    {
-        title: 'Reports',
-        href: route('admin.reports.index'),
-        icon: BookOpen,
-    },
+    // Event
+    { title: 'Sessions', href: route('admin.sessions.index'), icon: Calendar },
+    { title: 'Invitations', href: route('admin.invitations.index'), icon: Ticket },
 
-    {
-        title: 'Notifications',
-        href: route('admin.notifications.index'),
-        icon: Bell, // import Bell from lucide-vue-next
-    },
-    {
-        title: 'Payments', // ✅ New payments menu
-        href: route('admin.payment.index'),
-        icon: DollarSign, // you can swap for a better icon e.g. DollarSign
-    },
+    // People
+    { title: 'Users', href: route('admin.users.index'), icon: Users },
+    { title: 'Courses', href: route('admin.courses.index'), icon: BookOpen },
 
-];
+    // Operations
+    { title: 'Gown', href: route('admin.gowns.index'), icon: GraduationCap },
+    { title: 'Gown Collections', href: route('admin.gown-collections.index'), icon: Archive },
+    { title: 'Attendance', href: route('admin.attendance.index'), icon: ClipboardCheck },
+
+    // Finance
+    { title: 'Payments', href: route('admin.payment.index'), icon: DollarSign },
+
+    // Comms
+    { title: 'Notifications', href: route('admin.notifications.index'), icon: Bell },
+
+    // Analytics
+    { title: 'Reports', href: route('admin.reports.index'), icon: BarChart2 },
+]
 
 const studentNavItems = [
-    {
-        title: 'Dashboard',
-        href: route('student.dashboard'),
-        icon: LayoutGrid,
-    },
+    { title: 'Dashboard', href: route('student.dashboard'), icon: LayoutGrid },
+]
 
-];
+// Footer links
+// const footerNavItems = [
 
-// Footer Nav Items
-const footerNavItems = [
-    {
-        title: 'Github Repo',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
-    },
-];
+// ]
 </script>
 
 <template>

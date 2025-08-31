@@ -11,8 +11,11 @@ class SessionRegistration extends Model
 
     protected $fillable = [
         'user_id',
-        'session_id',
+        'convocation_session_id',
         'guest_count',
+        'attendance_confirmed',
+        'gown_size',
+        'collection_date',
     ];
 
     public function user()
@@ -22,6 +25,6 @@ class SessionRegistration extends Model
 
     public function session()
     {
-        return $this->belongsTo(ConvocationSession::class);
+        return $this->belongsTo(ConvocationSession::class, 'convocation_session_id');
     }
 }

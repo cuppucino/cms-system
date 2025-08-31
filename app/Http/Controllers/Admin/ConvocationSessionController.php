@@ -11,7 +11,7 @@ class ConvocationSessionController extends Controller
 {
     public function index()
     {
-        $sessions = ConvocationSession::withCount('users')->get();
+        $sessions = ConvocationSession::withCount('registrations')->get();
 
         return Inertia::render('admin/Sessions/Index', [
             'sessions' => $sessions,
@@ -32,7 +32,13 @@ class ConvocationSessionController extends Controller
             'quota' => 'required|integer|min:1',
         ]);
 
-        ConvocationSession::create($request->all());
+        ConvocationSession::create([
+            'name' => $request->name,
+            'date' => $request->date,
+            'location' => $request->location,
+            'quota' => $request->quota,
+            'registered' => 0,
+        ]);
 
         return redirect()->route('admin.sessions.index')->with('message', 'Session created successfully!');
     }

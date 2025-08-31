@@ -16,18 +16,27 @@ class ConvocationSession extends Model
         'quota',
     ];
 
-    // Relationship with students
-    public function students()
-    {
-        return $this->hasMany(User::class);
-    }
-
-    public function users()
-    {
-        return $this->hasMany(User::class);
-    }
+    /**
+     * Relationship: Registrations for this session
+     */
     public function registrations()
     {
         return $this->hasMany(SessionRegistration::class);
+    }
+
+    /**
+     * Relationship: Invitations for this session
+     */
+    public function invitations()
+    {
+        return $this->hasMany(Invitation::class, 'convocation_session_id');
+    }
+
+    /**
+     * Relationship: Attendance records for this session
+     */
+    public function attendanceRecords()
+    {
+        return $this->hasMany(AttendanceRecord::class, 'session_id');
     }
 }

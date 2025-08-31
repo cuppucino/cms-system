@@ -18,16 +18,16 @@ class AttendanceController extends Controller
     {
         $query = AttendanceRecord::with(['user', 'session']);
 
-        //  Filter by status
+        // Filter by status
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        //  Search by user name or email
+        // Search by user name or email
         if ($request->filled('search')) {
             $query->whereHas('user', function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%")
-                    ->orWhere('email', 'like', "%{$request->search}%");
+                  ->orWhere('email', 'like', "%{$request->search}%");
             });
         }
 
@@ -51,13 +51,31 @@ class AttendanceController extends Controller
      */
     public function checkIn($token)
     {
-        $record = AttendanceRecord::where('attendance_token', $token)->firstOrFail();
+        $record = AttendanceRecord::where('attendance_token', $token)->with(['user','session'])->first();
 
-        $record->status = 'checked_in';
-        $record->checked_in_at = now();
-        $record->save();
+        if (!$record) {
+            return response()->view('checkin_result', [
+                'message' => '❌ Invalid or revoked invitation.',
+                'status'  => 'error',
+            ]);
+        }
 
-        return response()->json(['message' => 'Attendance confirmed!']);
+        if ($record->status === 'checked_in') {
+            return response()->view('checkin_result', [
+                'message' => '⚠️ Already checked in!',
+                'status'  => 'warning',
+            ]);
+        }
+
+        $record->update([
+            'status'        => 'checked_in',
+            'checked_in_at' => now(),
+        ]);
+
+        return response()->view('checkin_result', [
+            'message' => '✅ You have successfully checked in!',
+            'status'  => 'success',
+        ]);
     }
 
     /**
@@ -74,6 +92,9 @@ class AttendanceController extends Controller
         return back()->with('message', 'Student checked in manually.');
     }
 
+    /**
+     * Export attendance records
+     */
     public function export()
     {
         return Excel::download(new AttendanceExport, 'attendance_report.xlsx');

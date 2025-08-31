@@ -1,114 +1,114 @@
 <script setup lang="ts">
-import Button from '@/components/ui/button/Button.vue';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { type BreadcrumbItem } from '@/types';
-import { Head, Link, useForm} from '@inertiajs/vue3';
-
-
+import AppLayout from '@/layouts/AppLayout.vue'
+import Button from '@/components/ui/button/Button.vue'
+import { Head, Link, useForm } from '@inertiajs/vue3'
+import type { BreadcrumbItem } from '@/types'
 
 const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Users Create',
-        href: '/users',
-    },
-];
+  { title: 'Users', href: route('admin.users.index') },
+  { title: 'Create', href: route('admin.users.create') }
+]
 
-// Using Inertia useForm for reactive form state and errors
+const props = defineProps<{
+  courses: Array<{ id: number; name: string }>
+  sessions: Array<any>
+}>()
+
 const form = useForm({
-    name: '',
-    email: '',
-    password: '',
-    role: 'User',
-    is_admin: '0', // Add is_admin property, default to '0' (User)
-});
-
-// Submit handler
-// const submit = () => {
-//     form.post(route('users.store'), {
-//         onSuccess: () => {
-//             form.reset(); // Clear form after success
-//         },
-//     });
-// };
+  name: '',
+  email: '',
+  password: '',
+  is_admin: '0',
+  student_id: '',
+  course_id: '',
+})
 </script>
 
-
 <template>
+  <Head title="Users Create" />
+  <AppLayout :breadcrumbs="breadcrumbs">
+    <div class="space-y-6 p-6">
+      <h1 class="text-xl font-semibold text-gray-900">Create User</h1>
 
-    <Head title="Users Create" />
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="p-4 max-w-md mx-auto">
-            <h1 class="text-xl font-bold mb-4">Create User</h1>
+      <form @submit.prevent="form.post(route('admin.users.store'))" class="grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-2">
+        <!-- Left Column -->
+        <div class="space-y-5">
+          <!-- Name -->
+          <div>
+            <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+            <input id="name" type="text" v-model="form.name"
+                   class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                   :class="{ 'border-red-500': form.errors.name }" />
+            <p v-if="form.errors.name" class="mt-1 text-sm text-red-600">{{ form.errors.name }}</p>
+          </div>
 
-            <form @submit.prevent="form.post(route('users.store'))" class="space-y-4">
+          <!-- Email -->
+          <div>
+            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+            <input id="email" type="email" v-model="form.email"
+                   class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                   :class="{ 'border-red-500': form.errors.email }" />
+            <p v-if="form.errors.email" class="mt-1 text-sm text-red-600">{{ form.errors.email }}</p>
+          </div>
 
-                <!-- Name -->
-                <div>
-                    <label for="name" class="block text-sm font-medium">Name</label>
-                    <input
-                        v-model="form.name"
-                        type="text"
-                        id="name"
-                        class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
-                    />
-                    <div v-if="form.errors.name" class="text-red-600 text-sm mt-1">
-                        {{ form.errors.name }}
-                    </div>
-                </div>
-
-                <!-- Email -->
-                <div>
-                    <label for="email" class="block text-sm font-medium">Email</label>
-                    <input
-                        v-model="form.email"
-                        type="email"
-                        id="email"
-                        class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
-                    />
-                    <div v-if="form.errors.email" class="text-red-600 text-sm mt-1">
-                        {{ form.errors.email }}
-                    </div>
-                </div>
-
-                <!-- Password -->
-                <div>
-                    <label for="password" class="block text-sm font-medium">Password</label>
-                    <input
-                        v-model="form.password"
-                        type="password"
-                        id="password"
-                        class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
-                    />
-                    <div v-if="form.errors.password" class="text-red-600 text-sm mt-1">
-                        {{ form.errors.password }}
-                    </div>
-                </div>
-
-                <!-- Role -->
-                <div>
-                    <label for="role" class="block text-sm font-medium">Role</label>
-                    <select
-                        v-model="form.is_admin"
-                        id="is_admin"
-                        class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
-                    >
-                        <option value="0">User</option>
-                        <option value="1">Admin</option>
-                        <!-- Add other roles if needed -->
-                    </select>
-                    <div v-if="form.errors.role" class="text-red-600 text-sm mt-1">
-                        {{ form.errors.role }}
-                    </div>
-                </div>
-
-                <!-- Buttons -->
-                <div class="flex items-center space-x-2">
-                    <Button type="submit" class="bg-blue-600 text-white">Create</Button>
-                    <Link :href="route('admin.users.index')">
-                        <Button class="bg-gray-600 text-white">Back</Button>
-                    </Link>
-                </div>
-            </form>
+          <!-- Password -->
+          <div>
+            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+            <input id="password" type="password" v-model="form.password"
+                   class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                   :class="{ 'border-red-500': form.errors.password }" />
+            <p v-if="form.errors.password" class="mt-1 text-sm text-red-600">{{ form.errors.password }}</p>
+          </div>
         </div>
-    </AppLayout>
+
+        <!-- Right Column -->
+        <div class="space-y-5">
+          <!-- Student ID -->
+          <div>
+            <label for="student_id" class="block text-sm font-medium text-gray-700">Student ID</label>
+            <input id="student_id" type="text" v-model="form.student_id"
+                   class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                   :class="{ 'border-red-500': form.errors.student_id }" />
+            <p v-if="form.errors.student_id" class="mt-1 text-sm text-red-600">{{ form.errors.student_id }}</p>
+          </div>
+
+          <!-- Course -->
+          <div>
+            <label for="course_id" class="block text-sm font-medium text-gray-700">Course</label>
+            <select id="course_id" v-model="form.course_id"
+                    class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                    :class="{ 'border-red-500': form.errors.course_id }">
+              <option value="">Select a course</option>
+              <option v-for="course in props.courses" :key="course.id" :value="course.id">{{ course.name }}</option>
+            </select>
+            <p v-if="form.errors.course_id" class="mt-1 text-sm text-red-600">{{ form.errors.course_id }}</p>
+          </div>
+
+          <!-- Role -->
+          <div>
+            <label for="is_admin" class="block text-sm font-medium text-gray-700">Role</label>
+            <select id="is_admin" v-model="form.is_admin"
+                    class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                    :class="{ 'border-red-500': form.errors.is_admin }">
+              <option value="0">User</option>
+              <option value="1">Admin</option>
+            </select>
+            <p v-if="form.errors.is_admin" class="mt-1 text-sm text-red-600">{{ form.errors.is_admin }}</p>
+          </div>
+        </div>
+
+        <!-- Actions full width -->
+        <div class="col-span-1 md:col-span-2 flex items-center gap-2">
+          <Button type="submit" class="bg-indigo-600 text-white hover:bg-indigo-500">Create</Button>
+          <Link :href="route('admin.users.index')">
+            <Button type="button" class="bg-gray-600 text-white hover:bg-gray-500">Back</Button>
+          </Link>
+        </div>
+      </form>
+    </div>
+  </AppLayout>
 </template>
+
+<style scoped>
+/* Two-column layout for better use of space */
+</style>
