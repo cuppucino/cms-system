@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Student;
 use App\Http\Controllers\Controller;
 use App\Models\Invitation;
 use Illuminate\Support\Facades\Auth;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Facades\View;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -53,34 +54,28 @@ class InvitationController extends Controller
     }
 
     public function download()
-{
-    $invitation = Invitation::where('user_id', Auth::id())
-        ->whereNull('revoked_at')
-        ->latest()
-        ->first();
+    {
+        $invitation = Invitation::where('user_id', Auth::id())
+            ->whereNull('revoked_at')
+            ->latest()
+            ->first();
 
-    if (!$invitation) {
-        return back()->with('error', 'No active invitation to download.');
+        if (!$invitation) {
+            return back()->with('error', 'No active invitation to download.');
+        }
+
+        $url = route('attendance.checkIn', ['token' => $invitation->code]);
+
+        $qrCode = base64_encode(
+            QrCode::format('png')->size(150)->margin(1)->generate($url)
+        );
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invitation', [
+            'user'       => Auth::user(),
+            'invitation' => $invitation,
+            'qrCode'     => $qrCode,
+        ]);
+
+        return $pdf->stream('invitation.pdf');
     }
-
-    // ✅ Generate QR as base64 PNG
-    $qrCode = base64_encode(
-        \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-            ->size(150)
-            ->margin(1)
-            ->generate(json_encode([
-                'code' => $invitation->code,
-                'user_id' => $invitation->user_id,
-                'session_id' => $invitation->convocation_session_id,
-            ]))
-    );
-
-    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invitation', [
-        'user' => Auth::user(),
-        'invitation' => $invitation,
-        'qrCode' => $qrCode,  // pass to view
-    ]);
-
-    return $pdf->stream('invitation.pdf');
-}
 }

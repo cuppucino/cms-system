@@ -18,6 +18,11 @@ class SessionRegistration extends Model
         'collection_date',
     ];
 
+    protected $casts = [
+        'attendance_confirmed' => 'boolean',
+        'collection_date'      => 'date',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

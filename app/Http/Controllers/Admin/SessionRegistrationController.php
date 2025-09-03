@@ -6,123 +6,163 @@ use App\Http\Controllers\Controller;
 use App\Models\SessionRegistration;
 use App\Models\ConvocationSession;
 use App\Models\AttendanceRecord;
-use Inertia\Inertia;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use App\Models\GownStock;
 use App\Models\GownCollection;
-
-
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class SessionRegistrationController extends Controller
 {
     public function index()
     {
-        $registrations = SessionRegistration::with(['user', 'session'])->get();
+        $regs = SessionRegistration::with(['user', 'session'])->get();
 
         return Inertia::render('admin/Sessions/Registrations', [
-            'registrations' => $registrations->map(fn($r) => [
-                'id' => $r->id,
-                'student_name' => $r->user->name,
-                'session_name' => $r->session->name,
-                'guest_count' => $r->guest_count,
-            ])
+            'registrations' => $regs->map(function ($r) {
+                $status = AttendanceRecord::where('user_id', $r->user_id)
+                    ->where('session_id', $r->convocation_session_id)
+                    ->value('status');
+
+                return [
+                    'id' => $r->id,
+                    'student_name' => $r->user->name,
+                    'session_name' => $r->session->name,
+                    'guest_count' => $r->guest_count,
+                    'gown_size' => $r->gown_size,
+                    'status' => $status ?? 'pending',
+                    'created_at' => $r->created_at?->toDateTimeString(),
+                ];
+            }),
         ]);
     }
 
     public function store(Request $request)
     {
-        $user = $request->user();
-
-        // ✅ Check if user already registered
-        $existingRegistration = SessionRegistration::where('user_id', $user->id)->first();
-        if ($existingRegistration) {
-            return back()->withErrors(['registration' => 'You have already registered for a session.']);
-        }
-
         $data = $request->validate([
+            'user_id' => 'required|exists:users,id',
             'convocation_session_id' => 'required|exists:convocation_sessions,id',
-            'guest_count' => 'required|integer|min:0',
-            'attendance_confirmed' => 'required|boolean',
+            'guest_count' => 'required|integer|min:0|max:' . config('convocation.max_guest_per_student', 2),
             'gown_size' => 'nullable|in:XS,S,M,L,XL',
             'collection_date' => 'nullable|date',
         ]);
 
-        $session = ConvocationSession::findOrFail($data['convocation_session_id']);
+        DB::transaction(function () use ($data) {
+            // Lock target session
+            $session = ConvocationSession::where('id', $data['convocation_session_id'])
+                ->lockForUpdate()->firstOrFail();
 
-        // ✅ Check quota
-        $registeredCount = SessionRegistration::where('convocation_session_id', $session->id)->count();
-        if ($registeredCount >= $session->quota) {
-            return back()->withErrors(['convocation_session_id' => 'This session is full. Please choose another.']);
-        }
+            // Enforce student quota
+            if ($session->registered >= $session->quota) {
+                abort(422, 'This session is full.');
+            }
 
-        DB::transaction(function () use ($user, $data, $session) {
-            // 1. Save registration
-            SessionRegistration::create(array_merge($data, ['user_id' => $user->id]));
+            // Enforce guest quota
+            if ($session->guest_registered + $data['guest_count'] > $session->guest_quota) {
+                abort(422, 'Guest quota for this session is exceeded.');
+            }
 
-            // 2. Save attendance record
-            AttendanceRecord::updateOrCreate(
+            // Existing registration?
+            $existing = SessionRegistration::where('user_id', $data['user_id'])->first();
+            $oldSessionId = $existing?->convocation_session_id;
+            $oldGown = $existing?->gown_size;
+            $oldGuestCount = $existing?->guest_count ?? 0;
+
+            // Move / create registration
+            SessionRegistration::updateOrCreate(
+                ['user_id' => $data['user_id']],
                 [
-                    'user_id' => $user->id,
-                    'session_id' => $session->id,
-                ],
-                [
-                    'status' => $data['attendance_confirmed'] ? 'registered' : 'pending',
+                    'convocation_session_id' => $session->id,
+                    'guest_count' => $data['guest_count'],
+                    'attendance_confirmed' => true,
+                    'gown_size' => $data['gown_size'] ?? null,
+                    'collection_date' => $data['collection_date'] ?? null,
                 ]
             );
 
-            // 3. Reserve gown if selected
-            if (!empty($data['gown_size'])) {
-                $stock = GownStock::where('size', $data['gown_size'])->first();
-                if ($stock && $stock->available > 0) {
-                    GownCollection::updateOrCreate(
-                        ['user_id' => $user->id],
-                        [
-                            'size' => $data['gown_size'],
-                            'status' => 'reserved',
-                            'collection_date' => $data['collection_date'],
-                        ]
-                    );
-
-                    $stock->decrement('available');
+            // Adjust counters if new or moved
+            if (!$existing || $oldSessionId !== $session->id) {
+                // Decrement old session
+                if ($oldSessionId) {
+                    $old = ConvocationSession::where('id', $oldSessionId)->lockForUpdate()->first();
+                    if ($old) {
+                        $old->decrement('registered');
+                        $old->decrement('guest_registered', $oldGuestCount);
+                    }
                 }
+                $session->increment('registered');
+                $session->increment('guest_registered', $data['guest_count']);
+            } elseif ($oldGuestCount !== $data['guest_count']) {
+                // Adjust guest count if changed
+                $session->increment('guest_registered', $data['guest_count'] - $oldGuestCount);
+            }
+
+            // Attendance record
+            AttendanceRecord::where('user_id', $data['user_id'])->delete();
+            AttendanceRecord::create([
+                'user_id' => $data['user_id'],
+                'session_id' => $session->id,
+                'attendance_token' => Str::uuid(),
+                'status' => 'registered',
+            ]);
+
+            // Gown stock
+            if (!empty($data['gown_size'])) {
+                if ($oldGown && $oldGown !== $data['gown_size']) {
+                    $oldStock = GownStock::where('size', $oldGown)->lockForUpdate()->first();
+                    if ($oldStock) $oldStock->increment('available');
+                }
+                $newStock = GownStock::where('size', $data['gown_size'])->lockForUpdate()->first();
+                if (!$newStock || $newStock->available <= 0) {
+                    abort(422, 'Selected gown size is no longer available.');
+                }
+                if (!$existing || $oldGown !== $data['gown_size']) {
+                    $newStock->decrement('available');
+                }
+
+                GownCollection::updateOrCreate(
+                    ['user_id' => $data['user_id']],
+                    [
+                        'size' => $data['gown_size'],
+                        'status' => 'reserved',
+                        'collection_date' => $data['collection_date'] ?? null,
+                    ]
+                );
             }
         });
 
-        return redirect()
-            ->route('student.registration.index')
-            ->with('message', 'Registration saved successfully!');
+        return back()->with('message', 'Registration saved.');
     }
 
-    public function destroy(Request $request)
+    public function destroy(string $id)
     {
-        $user = $request->user();
+        DB::transaction(function () use ($id) {
+            $r = SessionRegistration::withTrashed()->findOrFail($id);
 
-        DB::transaction(function () use ($user) {
-            $registration = SessionRegistration::where('user_id', $user->id)->first();
-
-            if ($registration) {
-                // Restore gown stock if reserved
-                if (!empty($registration->gown_size)) {
-                    $stock = GownStock::where('size', $registration->gown_size)->first();
-                    if ($stock) {
-                        $stock->increment('available');
-                    }
-
-                    // Remove gown collection
-                    GownCollection::where('user_id', $user->id)->delete();
-                }
-
-                // Delete attendance record
-                AttendanceRecord::where('user_id', $user->id)->delete();
-
-                // Delete registration
-                $registration->delete();
+            // Session counters
+            $session = ConvocationSession::where('id', $r->convocation_session_id)
+                ->lockForUpdate()->first();
+            if ($session) {
+                $session->decrement('registered');
+                $session->decrement('guest_registered', $r->guest_count);
             }
+
+            // Gown restore
+            if ($r->gown_size) {
+                $stock = GownStock::where('size', $r->gown_size)->lockForUpdate()->first();
+                if ($stock) $stock->increment('available');
+                GownCollection::where('user_id', $r->user_id)->delete();
+            }
+
+            // Attendance cleanup
+            AttendanceRecord::where('user_id', $r->user_id)
+                ->where('session_id', $r->convocation_session_id)
+                ->delete();
+
+            $r->delete();
         });
 
-        return redirect()
-            ->route('student.registration.index')
-            ->with('message', 'Your registration has been cancelled and gown stock restored.');
+        return back()->with('message', 'Registration cancelled.');
     }
 }

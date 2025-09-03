@@ -12,11 +12,17 @@ use App\Models\GownCollection;
 use App\Models\Notification;
 use Inertia\Inertia;
 
-class AdminDashboardController extends Controller
+
+class DashboardController extends Controller
 {
+    // public function __construct()
+    // {
+    //     $this->middleware('can:admin');
+    // }
+
     public function index()
     {
-        return Inertia::render('Admin/Dashboard', [
+        return Inertia::render('admin/Dashboard', [
             'stats' => [
                 'students'        => User::where('is_admin', false)->count(),
                 'registrations'   => SessionRegistration::count(),

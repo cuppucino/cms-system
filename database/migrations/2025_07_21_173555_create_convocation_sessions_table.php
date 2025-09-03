@@ -18,6 +18,8 @@ return new class extends Migration
             $table->string('location');
             $table->integer('quota');
             $table->integer('registered')->default(0); // Track the number of registered students
+            $table->integer('guest_quota')->default(0);
+            $table->integer('guest_registered')->default(0); // Track the number of registered guests
             $table->timestamps();
         });
     }

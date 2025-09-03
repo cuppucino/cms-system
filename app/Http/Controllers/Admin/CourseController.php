@@ -11,6 +11,11 @@ use Inertia\Inertia;
 
 class CourseController extends Controller
 {
+    // public function __construct()
+    // {
+    //     $this->middleware('can:admin');
+    // }
+
     // List courses
     public function index()
     {

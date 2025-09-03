@@ -51,9 +51,9 @@ class DashboardController extends Controller
 
         return Inertia::render('student/Dashboard', [
             'studentSummary' => $summary,
-            'auth' => [
-                'user' => $user,
-            ],
+            // 'auth' => [
+            //     'user' => $user,
+            // ],
         ]);
     }
 }

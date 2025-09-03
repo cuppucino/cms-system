@@ -25,6 +25,8 @@ return new class extends Migration
             $table->string('student_id')->nullable(); // only for students
             $table->foreignId('course_id')->nullable()->constrained()->cascadeOnDelete(); // references courses.id
 
+            // notifications
+            $table->timestamp('last_notif_seen_at')->nullable();
 
             // Laravel default tokens & timestamps
             $table->rememberToken();

@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
         ConvocationSessionSeeder::class,
         SessionRegistrationSeeder::class,
         GownStockSeeder::class,
+        CourseSeeder::class,
     ]);
 }
 

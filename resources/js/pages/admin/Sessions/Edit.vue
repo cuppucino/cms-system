@@ -9,6 +9,7 @@ interface Session {
   date: string
   location: string
   quota: number
+  guest_quota: number // Added
 }
 
 const props = defineProps<{ session: Session }>()
@@ -18,6 +19,7 @@ const form = useForm({
   date: props.session.date,
   location: props.session.location,
   quota: props.session.quota,
+  guest_quota: props.session.guest_quota, // Added
 })
 
 const submit = () => {
@@ -62,11 +64,20 @@ const submit = () => {
 
         <!-- Quota -->
         <div>
-          <label class="block text-sm font-medium text-gray-700" for="quota">Quota</label>
+          <label class="block text-sm font-medium text-gray-700" for="quota">Student Quota</label>
           <input id="quota" v-model.number="form.quota" type="number" min="1"
                  class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                  :class="{ 'border-red-500': form.errors.quota }" required />
           <p v-if="form.errors.quota" class="mt-1 text-sm text-red-600">{{ form.errors.quota }}</p>
+        </div>
+
+        <!-- Guest Quota -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700" for="guest_quota">Guest Quota</label>
+          <input id="guest_quota" v-model.number="form.guest_quota" type="number" min="0"
+                 class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                 :class="{ 'border-red-500': form.errors.guest_quota }" required />
+          <p v-if="form.errors.guest_quota" class="mt-1 text-sm text-red-600">{{ form.errors.guest_quota }}</p>
         </div>
 
         <!-- Actions -->

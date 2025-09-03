@@ -2,27 +2,21 @@
 
 namespace App\Http\Middleware;
 
-use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
-
+use App\Models\Notification;
+use Illuminate\Support\Arr;
 
 class HandleInertiaRequests extends Middleware
 {
     /**
      * The root template that's loaded on the first page visit.
-     *
-     * @see https://inertiajs.com/server-side-setup#root-template
-     *
-     * @var string
      */
     protected $rootView = 'app';
 
     /**
      * Determines the current asset version.
-     *
-     * @see https://inertiajs.com/asset-versioning
      */
     public function version(Request $request): ?string
     {
@@ -31,30 +25,67 @@ class HandleInertiaRequests extends Middleware
 
     /**
      * Define the props that are shared by default.
-     *
-     * @see https://inertiajs.com/shared-data
-     *
-     * @return array<string, mixed>
      */
     public function share(Request $request): array
     {
-        [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
+        $shared = parent::share($request);
+        $user = $request->user();
 
-        return [
-            ...parent::share($request),
-            'name' => config('app.name'),
-            'quote' => ['message' => trim($message), 'author' => trim($author)],
+        if (!$user) {
+            return array_merge($shared, [
+                'auth' => ['user' => null],
+            ]);
+        }
+
+        // Notifications visible to this user or global (user_id null)
+        $base = Notification::query()
+            ->where(function ($q) use ($user) {
+                $q->whereNull('user_id')
+                    ->orWhere('user_id', $user->id);
+            });
+
+        $unread = (clone $base)
+            ->when(
+                $user->last_notif_seen_at,
+                fn($q) =>
+                $q->where('created_at', '>', $user->last_notif_seen_at)
+            )
+            ->count();
+
+        $recent = (clone $base)
+            ->latest()
+            ->limit(10)
+            ->get(['id', 'title', 'message', 'created_at'])
+            ->map(fn($n) => [
+                'id'         => $n->id,
+                'title'      => $n->title,
+                'message'    => $n->message,
+                'is_read'    => $user->last_notif_seen_at
+                    ? $n->created_at->lte($user->last_notif_seen_at)
+                    : false,
+                'created_at' => $n->created_at->diffForHumans(),
+                'created_ago' => $n->created_at->diffForHumans(),
+            ]);
+
+        return array_merge($shared, [
             'auth' => [
-                'user' => $request->user(),
+                'user' => array_merge(
+                    Arr::only($user->toArray(), ['id', 'name', 'email']),
+                    [
+                        // ✅ Explicit cast so Vue sees true/false
+                        'is_admin'             => (bool) $user->is_admin,
+                        'unread_notifications' => $unread,
+                        'recent_notifications' => $recent,
+                    ]
+                ),
             ],
-            'ziggy' => [
-                ...(new Ziggy)->toArray(),
-                'location' => $request->url(),
-            ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'flash' => [
-                'message' => fn() => $request->session()->get('message'),
-            ],
-        ];
+
+            // Optional: expose Ziggy routes to JS
+            'ziggy' => function () use ($request) {
+                return array_merge((new Ziggy)->toArray(), [
+                    'location' => $request->url(),
+                ]);
+            },
+        ]);
     }
 }

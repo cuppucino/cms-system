@@ -17,6 +17,10 @@ class Payment extends Model
         'reference',
     ];
 
+    protected $casts = [
+        'amount' => 'decimal:2',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

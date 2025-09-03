@@ -9,6 +9,11 @@ use Inertia\Inertia;
 
 class ConvocationSessionController extends Controller
 {
+    // public function __construct()
+    // {
+    //     $this->middleware('can:admin');
+    // }
+
     public function index()
     {
         $sessions = ConvocationSession::withCount('registrations')->get();
@@ -30,6 +35,7 @@ class ConvocationSessionController extends Controller
             'date' => 'required|date',
             'location' => 'required|string',
             'quota' => 'required|integer|min:1',
+            'guest_quota' => 'required|integer|min:0',
         ]);
 
         ConvocationSession::create([
@@ -38,7 +44,10 @@ class ConvocationSessionController extends Controller
             'location' => $request->location,
             'quota' => $request->quota,
             'registered' => 0,
+            'guest_quota' => $request->guest_quota,
+            'guest_registered' => 0,
         ]);
+
 
         return redirect()->route('admin.sessions.index')->with('message', 'Session created successfully!');
     }

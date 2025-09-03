@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import StudentLayout from '@/layouts/StudentLayout.vue'
 import { Head, Link } from '@inertiajs/vue3'
+import moment from 'moment-timezone'
 
 defineOptions({ layout: StudentLayout })
 
@@ -13,6 +14,14 @@ type Invitation = {
 }
 
 const props = defineProps<{ invitation: Invitation | null }>()
+
+// Function to convert time to Malaysia Time
+const getMalaysiaTime = (time: string | null) => {
+    if (time) {
+        return moment(time).tz('Asia/Kuala_Lumpur').format('YYYY-MM-DD HH:mm:ss') // Format to Malaysia Time
+    }
+    return '—' // Return '—' if no time is available
+}
 </script>
 
 <template>
@@ -55,7 +64,7 @@ const props = defineProps<{ invitation: Invitation | null }>()
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Issued At</p>
                     <p class="font-medium text-gray-900 dark:text-gray-50">
-                        {{ props.invitation.created_at || '—' }}
+                        {{ getMalaysiaTime(props.invitation.created_at) }}
                     </p>
                 </div>
 

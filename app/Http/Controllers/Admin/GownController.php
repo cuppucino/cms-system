@@ -10,6 +10,11 @@ use Illuminate\Http\Request;
 
 class GownController extends Controller
 {
+    // public function __construct()
+    // {
+    //     $this->middleware('can:admin');
+    // }
+
     public function index()
     {
         return Inertia::render('admin/Gown/Index', [
@@ -49,14 +54,18 @@ class GownController extends Controller
     public function update(Request $request, GownStock $gown)
     {
         $request->validate([
-            'size' => 'required|in:XS,S,M,L,XL',
+            'size'  => 'required|in:XS,S,M,L,XL',
             'total' => 'required|integer|min:1',
         ]);
 
+        $newTotal = (int) $request->total;
+        $issued   = (int) $gown->issued;
+        $available = max(0, $newTotal - $issued);
+
         $gown->update([
-            'size' => $request->size,
-            'total' => $request->total,
-            'available' => $request->total - $gown->issued,
+            'size'      => $request->size,
+            'total'     => $newTotal,
+            'available' => $available,
         ]);
 
         return redirect()->route('admin.gowns.index')->with('message', 'Gown stock updated!');

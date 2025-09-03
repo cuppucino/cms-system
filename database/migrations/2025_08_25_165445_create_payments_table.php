@@ -14,8 +14,12 @@ return new class extends Migration
             $table->foreignId('gown_collection_id')->constrained()->onDelete('cascade');
             $table->decimal('amount', 8, 2);
             $table->string('status')->default('pending'); // pending, paid, failed
-            $table->string('reference')->nullable(); // dummy invoice/reference no.
+            $table->string('reference')->unique(); // make reference unique instead of nullable
             $table->timestamps();
+
+            // 🔹 extra indexes for performance
+            $table->index('status');
+            $table->index(['user_id', 'gown_collection_id']);
         });
     }
 

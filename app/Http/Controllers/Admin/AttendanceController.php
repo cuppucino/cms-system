@@ -8,9 +8,14 @@ use Illuminate\Http\Request;
 use App\Exports\AttendanceExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Inertia\Inertia;
+use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
+    // public function __construct()
+    // {
+    //     $this->middleware('can:admin');
+    // }
     /**
      * Attendance list with filters & search
      */
@@ -27,7 +32,7 @@ class AttendanceController extends Controller
         if ($request->filled('search')) {
             $query->whereHas('user', function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%")
-                  ->orWhere('email', 'like', "%{$request->search}%");
+                    ->orWhere('email', 'like', "%{$request->search}%");
             });
         }
 
@@ -51,7 +56,7 @@ class AttendanceController extends Controller
      */
     public function checkIn($token)
     {
-        $record = AttendanceRecord::where('attendance_token', $token)->with(['user','session'])->first();
+        $record = AttendanceRecord::where('attendance_token', $token)->with(['user', 'session'])->first();
 
         if (!$record) {
             return response()->view('checkin_result', [
@@ -60,6 +65,30 @@ class AttendanceController extends Controller
             ]);
         }
 
+        // Must be registered first
+        if ($record->status !== 'registered') {
+            return response()->view('checkin_result', [
+                'message' => '⚠️ Attendance not confirmed.',
+                'status'  => 'warning',
+            ]);
+        }
+
+
+        // Session date guard (same-day check-in)
+        if ($record->session && $record->session->date) {
+            $today = Carbon::today(); // Initialize today before usage
+            $sessionDay = Carbon::parse($record->session->date)->startOfDay(); // Make sure session date is at the start of the day
+
+            // Compare only the date (without time)
+            if (!$today->isSameDay($sessionDay)) {
+                return response()->view('checkin_result', [
+                    'message' => '⏳ Check-in only available on your session day.',
+                    'status'  => 'warning',
+                ]);
+            }
+        }
+
+        // Already checked in?
         if ($record->status === 'checked_in') {
             return response()->view('checkin_result', [
                 'message' => '⚠️ Already checked in!',

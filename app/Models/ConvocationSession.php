@@ -14,7 +14,11 @@ class ConvocationSession extends Model
         'date',
         'location',
         'quota',
+        'guest_quota',
+        'guest_registered',
     ];
+
+    protected $casts = ['date' => 'date', 'time' => 'datetime:H:i'];
 
     /**
      * Relationship: Registrations for this session
