@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\NotificationController as AdminNotificationContro
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\GuestController;
 
 /**
  * Student controllers
@@ -89,7 +90,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Notifications
         Route::get('notifications', [StudentNotificationController::class, 'index'])->name('notifications.index');
-          Route::post('notifications/seen', [StudentNotificationController::class, 'seen'])->name('notifications.seen');
+        Route::post('notifications/seen', [StudentNotificationController::class, 'seen'])->name('notifications.seen');
         Route::post('notifications/{id}/read', [StudentNotificationController::class, 'markAsRead'])->name('notifications.read');
 
         // Sessions
@@ -149,6 +150,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('reports/export/{kind}', [ReportsController::class, 'export'])
                 ->whereIn('kind', ['attendance', 'registrations', 'gowns', 'guests', 'sessions'])
                 ->name('reports.export');
+
+            // Guests
+            Route::get('guests', [GuestController::class, 'index'])->name('guest.index');
+            Route::get('guests/{id}/edit', [GuestController::class, 'edit'])->name('guest.edit');
+            Route::put('guests/{id}', [GuestController::class, 'update'])->name('guest.update');
+            Route::delete('guests/{id}', [GuestController::class, 'destroy'])->name('guest.destroy');
         });
 });
 

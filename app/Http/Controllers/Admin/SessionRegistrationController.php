@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use App\Models\Guest;
 
 class SessionRegistrationController extends Controller
 {
@@ -80,6 +81,18 @@ class SessionRegistrationController extends Controller
                     'collection_date' => $data['collection_date'] ?? null,
                 ]
             );
+
+            if ($data['guest_count'] > 0 && (!$existing || $oldGuestCount !== $data['guest_count'])) {
+                // Remove old guests if count changed
+                Guest::where('user_id', $data['user_id'])->delete();
+                // Add new guests (placeholder names)
+                for ($i = 1; $i <= $data['guest_count']; $i++) {
+                    Guest::create([
+                        'user_id' => $data['user_id'],
+                        'name' => "Guest $i for {$data['user_id']}",
+                    ]);
+                }
+            }
 
             // Adjust counters if new or moved
             if (!$existing || $oldSessionId !== $session->id) {

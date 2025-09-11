@@ -30,6 +30,7 @@ import {
     DollarSign,     // Payments
     Bell,           // Notifications
     BarChart2,      // Reports
+    UserPlus,       // Guests
 } from 'lucide-vue-next'
 
 // --- Read auth once per render and keep reactive via computed ---
@@ -48,6 +49,7 @@ const adminNavItems = [
     // People
     { title: 'Users', href: route('admin.users.index'), icon: Users },
     { title: 'Courses', href: route('admin.courses.index'), icon: BookOpen },
+    { title: 'Guests', href: route('admin.guest.index'), icon: UserPlus },
 
     // Operations
     { title: 'Gown', href: route('admin.gowns.index'), icon: GraduationCap },
