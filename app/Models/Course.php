@@ -14,11 +14,18 @@ class Course extends Model
         'name',
         'code',
         'faculty',
+        'convocation_session_id',
+        'hood_color',
     ];
 
     // Relationship with students
     public function students()
     {
         return $this->hasMany(User::class);
+    }
+
+    public function convocationSession()
+    {
+       return $this->belongsTo(ConvocationSession::class);
     }
 }

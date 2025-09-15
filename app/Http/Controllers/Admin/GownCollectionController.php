@@ -19,7 +19,7 @@ class GownCollectionController extends Controller
 
     public function index()
     {
-        $collections = GownCollection::with('user')->get();
+        $collections = GownCollection::with(['user',  'session'])->get();
 
         return Inertia::render('admin/Gown/GownCollection', [
             'collections' => $collections,

@@ -27,13 +27,13 @@ class SessionRegistrationController extends Controller
                     ->value('status');
 
                 return [
-                    'id' => $r->id,
+                    'id'           => $r->id,
                     'student_name' => $r->user->name,
                     'session_name' => $r->session->name,
-                    'guest_count' => $r->guest_count,
-                    'gown_size' => $r->gown_size,
-                    'status' => $status ?? 'pending',
-                    'created_at' => $r->created_at?->toDateTimeString(),
+                    'guest_count'  => $r->guest_count,
+                    'gown_size'    => $r->gown_size,
+                    'status'       => $status ?? 'pending',
+                    'created_at'   => $r->created_at?->toDateTimeString(),
                 ];
             }),
         ]);
@@ -42,12 +42,22 @@ class SessionRegistrationController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'convocation_session_id' => 'required|exists:convocation_sessions,id',
-            'guest_count' => 'required|integer|min:0|max:' . config('convocation.max_guest_per_student', 2),
-            'gown_size' => 'nullable|in:XS,S,M,L,XL',
-            'collection_date' => 'nullable|date',
+            'user_id'        => 'required|exists:users,id',
+            'guest_count'    => 'required|integer|min:0|max:' . config('convocation.max_guest_per_student', 2),
+            'gown_size'      => 'nullable|in:XS,S,M,L,XL',
+            'collection_date'=> 'nullable|date',
         ]);
+
+        // Find the student
+        $user = \App\Models\User::with('course.convocationSession')->findOrFail($data['user_id']);
+
+        // Auto-detect session from their course
+        $session = $user->course?->convocationSession;
+        if (!$session) {
+            abort(422, 'This student’s course is not mapped to a convocation session yet.');
+        }
+
+        $data['convocation_session_id'] = $session->id;
 
         DB::transaction(function () use ($data) {
             // Lock target session
@@ -65,38 +75,36 @@ class SessionRegistrationController extends Controller
             }
 
             // Existing registration?
-            $existing = SessionRegistration::where('user_id', $data['user_id'])->first();
-            $oldSessionId = $existing?->convocation_session_id;
-            $oldGown = $existing?->gown_size;
-            $oldGuestCount = $existing?->guest_count ?? 0;
+            $existing       = SessionRegistration::where('user_id', $data['user_id'])->first();
+            $oldSessionId   = $existing?->convocation_session_id;
+            $oldGown        = $existing?->gown_size;
+            $oldGuestCount  = $existing?->guest_count ?? 0;
 
             // Move / create registration
             SessionRegistration::updateOrCreate(
                 ['user_id' => $data['user_id']],
                 [
                     'convocation_session_id' => $session->id,
-                    'guest_count' => $data['guest_count'],
-                    'attendance_confirmed' => true,
-                    'gown_size' => $data['gown_size'] ?? null,
-                    'collection_date' => $data['collection_date'] ?? null,
+                    'guest_count'            => $data['guest_count'],
+                    'attendance_confirmed'   => true,
+                    'gown_size'              => $data['gown_size'] ?? null,
+                    'collection_date'        => $data['collection_date'] ?? null,
                 ]
             );
 
+            // Recreate guest rows if the count changed
             if ($data['guest_count'] > 0 && (!$existing || $oldGuestCount !== $data['guest_count'])) {
-                // Remove old guests if count changed
                 Guest::where('user_id', $data['user_id'])->delete();
-                // Add new guests (placeholder names)
                 for ($i = 1; $i <= $data['guest_count']; $i++) {
                     Guest::create([
                         'user_id' => $data['user_id'],
-                        'name' => "Guest $i for {$data['user_id']}",
+                        'name'    => "Guest $i for {$data['user_id']}",
                     ]);
                 }
             }
 
             // Adjust counters if new or moved
             if (!$existing || $oldSessionId !== $session->id) {
-                // Decrement old session
                 if ($oldSessionId) {
                     $old = ConvocationSession::where('id', $oldSessionId)->lockForUpdate()->first();
                     if ($old) {
@@ -107,25 +115,35 @@ class SessionRegistrationController extends Controller
                 $session->increment('registered');
                 $session->increment('guest_registered', $data['guest_count']);
             } elseif ($oldGuestCount !== $data['guest_count']) {
-                // Adjust guest count if changed
                 $session->increment('guest_registered', $data['guest_count'] - $oldGuestCount);
             }
 
-            // Attendance record
-            AttendanceRecord::where('user_id', $data['user_id'])->delete();
-            AttendanceRecord::create([
-                'user_id' => $data['user_id'],
+            // --- Attendance record (DO NOT rotate token) ---
+            // Keep any existing token so previously generated QR codes remain valid.
+            $record = AttendanceRecord::firstOrCreate(
+                ['user_id' => $data['user_id']],
+                [
+                    'attendance_token' => (string) Str::uuid(),
+                    'status'           => 'pending',
+                    'session_id'       => $session->id,
+                ]
+            );
+
+            // Align session & promote to registered without changing the token
+            $record->update([
                 'session_id' => $session->id,
-                'attendance_token' => Str::uuid(),
-                'status' => 'registered',
+                'status'     => 'registered',
             ]);
 
             // Gown stock
             if (!empty($data['gown_size'])) {
                 if ($oldGown && $oldGown !== $data['gown_size']) {
                     $oldStock = GownStock::where('size', $oldGown)->lockForUpdate()->first();
-                    if ($oldStock) $oldStock->increment('available');
+                    if ($oldStock) {
+                        $oldStock->increment('available');
+                    }
                 }
+
                 $newStock = GownStock::where('size', $data['gown_size'])->lockForUpdate()->first();
                 if (!$newStock || $newStock->available <= 0) {
                     abort(422, 'Selected gown size is no longer available.');
@@ -137,8 +155,8 @@ class SessionRegistrationController extends Controller
                 GownCollection::updateOrCreate(
                     ['user_id' => $data['user_id']],
                     [
-                        'size' => $data['gown_size'],
-                        'status' => 'reserved',
+                        'size'            => $data['gown_size'],
+                        'status'          => 'reserved',
                         'collection_date' => $data['collection_date'] ?? null,
                     ]
                 );
@@ -164,11 +182,13 @@ class SessionRegistrationController extends Controller
             // Gown restore
             if ($r->gown_size) {
                 $stock = GownStock::where('size', $r->gown_size)->lockForUpdate()->first();
-                if ($stock) $stock->increment('available');
+                if ($stock) {
+                    $stock->increment('available');
+                }
                 GownCollection::where('user_id', $r->user_id)->delete();
             }
 
-            // Attendance cleanup
+            // Attendance cleanup (cancelled = QR intentionally invalid)
             AttendanceRecord::where('user_id', $r->user_id)
                 ->where('session_id', $r->convocation_session_id)
                 ->delete();

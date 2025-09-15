@@ -151,29 +151,11 @@ const statPairs = computed(() => Object.entries(props.stats))
                             class="flex items-center justify-between px-6 py-3 hover:bg-gray-50">
                             <span class="truncate text-sm text-gray-800">{{
                                 p?.user?.name ?? '—'
-                                }}</span>
+                            }}</span>
                             <span class="text-sm font-semibold text-emerald-600">{{ fmtRM(Number(p?.amount ?? 0))
-                                }}</span>
+                            }}</span>
                         </li>
                     </ul>
-                </div>
-            </section>
-
-            <!-- Charts / Reports -->
-            <section class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <div
-                    class="flex min-h-[300px] items-center justify-center rounded-xl border border-gray-200 bg-white p-6 text-gray-400 shadow-sm">
-                    <div class="text-center">
-                        <div class="mb-2 text-xl">📊</div>
-                        <p class="text-sm">Registrations Trend (placeholder)</p>
-                    </div>
-                </div>
-                <div
-                    class="flex min-h-[300px] items-center justify-center rounded-xl border border-gray-200 bg-white p-6 text-gray-400 shadow-sm">
-                    <div class="text-center">
-                        <div class="mb-2 text-xl">📈</div>
-                        <p class="text-sm">Payments Overview (placeholder)</p>
-                    </div>
                 </div>
             </section>
 
@@ -194,10 +176,10 @@ const statPairs = computed(() => Object.entries(props.stats))
                         class="flex items-center justify-between px-6 py-3 hover:bg-gray-50">
                         <span class="truncate text-sm text-gray-700">{{
                             n?.message ?? '—'
-                            }}</span>
+                        }}</span>
                         <span class="text-xs text-gray-400">{{
                             fmtDate(n?.created_at)
-                            }}</span>
+                        }}</span>
                     </li>
                 </ul>
             </section>

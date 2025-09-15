@@ -18,7 +18,9 @@ class ConvocationSession extends Model
         'guest_registered',
     ];
 
-    protected $casts = ['date' => 'date', 'time' => 'datetime:H:i'];
+    protected $casts = [
+        'date' => 'datetime:Y-m-d',
+    ];
 
     /**
      * Relationship: Registrations for this session
@@ -42,5 +44,10 @@ class ConvocationSession extends Model
     public function attendanceRecords()
     {
         return $this->hasMany(AttendanceRecord::class, 'session_id');
+    }
+
+    public function courses()
+    {
+        return $this->hasMany(Course::class);
     }
 }

@@ -95,7 +95,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Sessions
         Route::get('session', [StudentSessionController::class, 'show'])->name('session.show');
-        Route::post('session/select', [StudentSessionController::class, 'select'])->name('session.select');
 
         // Gown
         Route::get('gown', [StudentGownController::class, 'show'])->name('gown.show');
@@ -156,6 +155,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('guests/{id}/edit', [GuestController::class, 'edit'])->name('guest.edit');
             Route::put('guests/{id}', [GuestController::class, 'update'])->name('guest.update');
             Route::delete('guests/{id}', [GuestController::class, 'destroy'])->name('guest.destroy');
+
+            // gown session
+            Route::resource('gown-sessions', \App\Http\Controllers\Admin\GownSessionController::class);
         });
 });
 

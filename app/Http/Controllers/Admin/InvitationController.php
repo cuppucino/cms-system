@@ -18,11 +18,6 @@ use App\Models\SessionRegistration;
 
 class InvitationController extends Controller
 {
-    // public function __construct()
-    // {
-    //     $this->middleware('can:admin');
-    // }
-
     public function index()
     {
         $invitations = Invitation::with(['user', 'session', 'issuer'])
@@ -72,12 +67,12 @@ class InvitationController extends Controller
             'user_ids'               => 'required|array|min:1',
             'user_ids.*'             => 'exists:users,id',
             'convocation_session_id' => 'nullable|exists:convocation_sessions,id',
-            'force'                  => 'sometimes|boolean', // allow override from UI
+            'force'                  => 'sometimes|boolean',
         ]);
 
         foreach ($data['user_ids'] as $uid) {
             DB::transaction(function () use ($uid, $data, $request) {
-                // 1) Resolve target session (explicit > registered)
+                // 1) Resolve session
                 $sessionId = $data['convocation_session_id']
                     ?: SessionRegistration::where('user_id', $uid)->value('convocation_session_id');
 
@@ -85,33 +80,51 @@ class InvitationController extends Controller
                     abort(422, 'Please pick a session, or the student must be registered first.');
                 }
 
-                // 2) Capacity guard (block if full unless override)
+                // 2) Capacity guard (unless override)
                 $sess = ConvocationSession::lockForUpdate()->findOrFail($sessionId);
                 if ($sess->registered >= $sess->quota && !$request->boolean('force')) {
                     abort(422, 'Session is full. Enable override to proceed.');
                 }
 
-                // 3) Registration-session alignment (block unless override)
+                // 3) Registration-session alignment (unless override)
                 $regSession = SessionRegistration::where('user_id', $uid)->value('convocation_session_id');
                 if ($regSession && (int)$regSession !== (int)$sessionId && !$request->boolean('force')) {
                     abort(422, 'Student is registered to a different session. Enable override to proceed.');
                 }
 
-                // 4) Ensure a single AttendanceRecord per user (rotate to this session with new token)
-                AttendanceRecord::where('user_id', $uid)->delete();
-                $record = AttendanceRecord::create([
-                    'user_id'          => $uid,
-                    'session_id'       => $sessionId,
-                    'attendance_token' => (string) Str::uuid(),
-                    'status'           => 'pending', // will move to 'registered' after RSVP
-                ]);
+                // 4) Upsert attendance record WITHOUT losing status
+                $existing = AttendanceRecord::where('user_id', $uid)->first();
 
-                // 5) Revoke any existing active invitations for this user (no duplicates)
+                // If user has a registration, default status should be 'registered', else 'pending'
+                $hasRegistration = SessionRegistration::where('user_id', $uid)->exists();
+                $desiredStatus   = $hasRegistration ? 'registered' : 'pending';
+
+                if ($existing) {
+                    // Preserve 'registered' if it was already registered
+                    $newStatus = $existing->status === 'registered' ? 'registered' : $desiredStatus;
+
+                    $existing->update([
+                        'session_id'       => $sessionId,
+                        'attendance_token' => (string) Str::uuid(), // rotate token
+                        'status'           => $newStatus,
+                    ]);
+
+                    $record = $existing;
+                } else {
+                    $record = AttendanceRecord::create([
+                        'user_id'          => $uid,
+                        'session_id'       => $sessionId,
+                        'attendance_token' => (string) Str::uuid(),
+                        'status'           => $desiredStatus,
+                    ]);
+                }
+
+                // 5) Revoke existing active invitations for this user (no duplicates)
                 Invitation::where('user_id', $uid)
                     ->whereNull('revoked_at')
                     ->update(['revoked_at' => now()]);
 
-                // 6) Create new invitation using the attendance token as the QR code
+                // 6) Create new invitation that points to the attendance token URL
                 $code = $record->attendance_token;
                 $url  = route('attendance.checkIn', ['token' => $code]);
 
@@ -135,6 +148,7 @@ class InvitationController extends Controller
         return redirect()->route('admin.invitations.index')
             ->with('message', 'Invitations generated successfully.');
     }
+
     public function revoke(Invitation $invitation)
     {
         if ($invitation->revoked_at) {

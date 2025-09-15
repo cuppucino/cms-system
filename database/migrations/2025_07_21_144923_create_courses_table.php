@@ -16,6 +16,16 @@ return new class extends Migration
             $table->string('name');
             $table->string('code')->unique();
             $table->string('faculty')->nullable();
+
+            // hood/robe color
+            $table->string('hood_color')->nullable();
+
+            // tie each course to a convocation session
+            $table->foreignId('convocation_session_id')
+                ->nullable()
+                ->constrained('convocation_sessions')
+                ->cascadeOnDelete();
+
             $table->timestamps();
         });
     }

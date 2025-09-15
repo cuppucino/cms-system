@@ -9,6 +9,7 @@ use App\Exports\AttendanceExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Inertia\Inertia;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Config;
 
 class AttendanceController extends Controller
 {
@@ -65,7 +66,6 @@ class AttendanceController extends Controller
             ]);
         }
 
-        // Must be registered first
         if ($record->status !== 'registered') {
             return response()->view('checkin_result', [
                 'message' => '⚠️ Attendance not confirmed.',
@@ -73,13 +73,12 @@ class AttendanceController extends Controller
             ]);
         }
 
-
-        // Session date guard (same-day check-in)
+        // Same-day guard (uses app timezone)
         if ($record->session && $record->session->date) {
-            $today = Carbon::today(); // Initialize today before usage
-            $sessionDay = Carbon::parse($record->session->date)->startOfDay(); // Make sure session date is at the start of the day
+            $tz = Config::get('app.timezone', 'UTC');
+            $today      = Carbon::today($tz); // midnight today in app TZ
+            $sessionDay = Carbon::parse($record->session->date, $tz)->startOfDay();
 
-            // Compare only the date (without time)
             if (!$today->isSameDay($sessionDay)) {
                 return response()->view('checkin_result', [
                     'message' => '⏳ Check-in only available on your session day.',
@@ -88,7 +87,6 @@ class AttendanceController extends Controller
             }
         }
 
-        // Already checked in?
         if ($record->status === 'checked_in') {
             return response()->view('checkin_result', [
                 'message' => '⚠️ Already checked in!',
@@ -106,7 +104,6 @@ class AttendanceController extends Controller
             'status'  => 'success',
         ]);
     }
-
     /**
      * Manual check-in by admin
      */

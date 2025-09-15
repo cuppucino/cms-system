@@ -76,6 +76,10 @@ class HandleInertiaRequests extends Middleware
                         'is_admin'             => (bool) $user->is_admin,
                         'unread_notifications' => $unread,
                         'recent_notifications' => $recent,
+                        'course' => $user->course()
+                            ->select('id', 'name', 'code', 'hood_color', 'convocation_session_id')
+                            ->with('convocationSession:id,name')
+                            ->first(),
                     ]
                 ),
             ],

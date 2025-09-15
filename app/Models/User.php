@@ -66,12 +66,12 @@ class User extends Authenticatable
 
     public function course()
     {
-        return $this->belongsTo(\App\Models\Course::class);
+        return $this->belongsTo(Course::class);
     }
 
     public function invitations()
     {
-        return $this->hasMany(\App\Models\Invitation::class);
+        return $this->hasMany(Invitation::class);
     }
 
     /**
